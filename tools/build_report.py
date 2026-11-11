@@ -114,6 +114,38 @@ def table(doc: Document, header, rows, widths):
     return t
 
 
+def add_hyperlink(paragraph, url: str, text: str, size: float = 9):
+    """在段落里插入一个真正可点击的超链接。"""
+    from docx.opc.constants import RELATIONSHIP_TYPE as RT
+
+    r_id = paragraph.part.relate_to(url, RT.HYPERLINK, is_external=True)
+    link = OxmlElement("w:hyperlink")
+    link.set(qn("r:id"), r_id)
+
+    run = OxmlElement("w:r")
+    rPr = OxmlElement("w:rPr")
+    fonts = OxmlElement("w:rFonts")
+    fonts.set(qn("w:ascii"), "Consolas")
+    fonts.set(qn("w:hAnsi"), "Consolas")
+    fonts.set(qn("w:eastAsia"), SONG)
+    color = OxmlElement("w:color")
+    color.set(qn("w:val"), "2F6FD0")
+    sz = OxmlElement("w:sz")
+    sz.set(qn("w:val"), str(int(size * 2)))
+    underline = OxmlElement("w:u")
+    underline.set(qn("w:val"), "single")
+    for el in (fonts, color, sz, underline):
+        rPr.append(el)
+
+    t = OxmlElement("w:t")
+    t.text = text
+    run.append(rPr)
+    run.append(t)
+    link.append(run)
+    paragraph._p.append(link)
+    return paragraph
+
+
 def code_block(doc: Document, lines, size: float = 8.5):
     """等宽字体的浅灰底代码块，整体作为一个段落，保证底色连续。"""
     p = doc.add_paragraph()
@@ -179,8 +211,15 @@ def main() -> Path:
     title = doc.add_paragraph()
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     title.paragraph_format.space_before = Pt(6)
-    title.paragraph_format.space_after = Pt(14)
+    title.paragraph_format.space_after = Pt(6)
     set_run_font(title.add_run("实验二　搜索算法实验报告"), HEI, 19, bold=True)
+
+    repo = doc.add_paragraph()
+    repo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    repo.paragraph_format.space_after = Pt(10)
+    set_run_font(repo.add_run("代码仓库："), SONG, 9, color=(90, 94, 100))
+    add_hyperlink(repo, "https://github.com/wyx494/project2",
+                  "https://github.com/wyx494/project2", size=9)
 
     # ---------------------------------------------------------------- 一
     heading(doc, "一、实验目的与实现环境")
